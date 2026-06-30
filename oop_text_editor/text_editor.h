@@ -44,7 +44,7 @@ public:
 
     Cursor cursor;
 
-    void newLine(std::unique_ptr<Line> nLine, bool isPrinting);
+    void newLine(std::unique_ptr<Line> nLine);
     void Append();
     void InsertPasteReplace(int choice);
     void Search();

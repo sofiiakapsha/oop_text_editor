@@ -3,6 +3,7 @@
 #include <iostream>
 #include <conio.h>
 #include <string>
+#include <fstream>
 
 UndoRedoState TextEditor::saveState() {
     UndoRedoState state;
@@ -98,7 +99,7 @@ void TextEditor::ReadingConsole() {
     }
 }
 
-void TextEditor::newLine(std::unique_ptr<Line> nLine, bool isPrinting) {
+void TextEditor::newLine(std::unique_ptr<Line> nLine) {
     UndoRedoState stateBefore = saveState();
     undoStack.push(std::move(stateBefore));
 
@@ -330,6 +331,42 @@ void TextEditor::Redo() {
     lines = std::move(redoVersion.linesSnapshot);
 
     printf("Redo performed.\n");
+}
+
+void TextEditor::Save(const std::string& filename) {
+    std::ofstream file(filename);
+
+    if (!file.is_open()) {
+        printf("Could not open file for writing.\n");
+        return;
+    }
+
+    for (const auto& line : lines) {
+        file << line->serialize() << "\n";
+    }
+
+    file.close();
+    printf("File saved successfully.\n");
+}
+
+void TextEditor::Load(const std::string& filename) {
+    std::ifstream file(filename);
+
+    if (!file.is_open()) {
+        printf("Could not open file for reading.\n");
+        return;
+    }
+
+    lines.clear();
+
+    std::string loadString;
+    while (std::getline(file, loadString)) {
+        std::unique_ptr<Line> loadLine = Line::deserialize(loadString);
+        lines.push_back(std::move(loadLine));
+    }
+
+    file.close();
+    printf("File loaded successfully.\n");
 }
 
 void TextEditor::printAll() const {
