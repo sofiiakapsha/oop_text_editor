@@ -115,8 +115,6 @@ void TextEditor::Append() {
         std::cout << "No current lines.\n";
         return;
     }
-    UndoRedoState stateBefore = saveState();
-    undoStack.push(std::move(stateBefore));
 
     std::cout << "Enter text: " << std::endl;
     std::string input;
@@ -132,9 +130,7 @@ void TextEditor::Append() {
     curLine->append(input);
 
     std::printf("Text appended.\n");
-
-    UndoRedoState stateAfter = saveState();
-    redoStack.push(std::move(stateAfter));
+    while (!redoStack.empty()) redoStack.pop();
 }
 
 void TextEditor::InsertPasteReplace(int choice) {
@@ -182,9 +178,8 @@ void TextEditor::InsertPasteReplace(int choice) {
     }
 
     lines[line]->setText(t_text);
-
-    UndoRedoState stateAfter = saveState();
-    redoStack.push(std::move(stateAfter));
+    std::printf("Operation is completed.\n");
+    while (!redoStack.empty()) redoStack.pop();
 }
 
 void TextEditor::Search() {
@@ -261,9 +256,80 @@ void TextEditor::DeleteAndCut(bool cut) {
     lines[line]->setText(text);
 
     printf("Information deleted.\n");
+    while (!redoStack.empty()) redoStack.pop();
+}
 
-    UndoRedoState stateAfter = saveState();
-    redoStack.push(std::move(stateAfter));
+void TextEditor::Copy() {
+    printf("Choose line, index for start and then for end (only in one line):\n");
+    ReadingConsole();
+
+    int line = cursor.getLine();
+    int indexStart = cursor.getIndex();
+
+    ReadingConsole();
+    int indexEnd = cursor.getIndex();
+
+    if (line != cursor.getLine()) {
+        printf("Only in one line!\n");
+        return;
+    }
+
+    int number = indexEnd - indexStart;
+
+    if (number <= 0) {
+        std::printf("You cannot copy this info.\n");
+        return;
+    }
+
+    if (line < 0 || line >= (int)lines.size()) {
+        printf("This line does not exist.\n");
+        return;
+    }
+
+    std::string text = lines[line]->getText();
+
+    if (indexStart < 0 || indexEnd >(int)text.size()) {
+        printf("Invalid index range.\n");
+        return;
+    }
+
+    copy = text.substr(indexStart, number);
+
+    std::printf("Copied successfully.\n");
+}
+
+void TextEditor::Undo() {
+    if (undoStack.empty()) {
+        printf("Nothing to undo.\n");
+        return;
+    }
+
+    UndoRedoState undoVersion = std::move(undoStack.top());
+    undoStack.pop();
+
+    UndoRedoState currentState = saveState();
+    redoStack.push(std::move(currentState));
+
+    lines = std::move(undoVersion.linesSnapshot);
+
+    printf("Undo performed.\n");
+}
+
+void TextEditor::Redo() {
+    if (redoStack.empty()) {
+        printf("Nothing to redo.\n");
+        return;
+    }
+
+    UndoRedoState redoVersion = std::move(redoStack.top());
+    redoStack.pop();
+
+    UndoRedoState currentState = saveState();
+    undoStack.push(std::move(currentState));
+
+    lines = std::move(redoVersion.linesSnapshot);
+
+    printf("Redo performed.\n");
 }
 
 void TextEditor::printAll() const {
