@@ -4,10 +4,7 @@
 #include <string>
 #include <stack>
 #include "line.h"
-
-struct UndoRedoState {
-    std::vector<std::unique_ptr<Line>> linesSnapshot;
-};
+#include "text.h"
 
 class Cursor {
 private: int indexLine, index;
@@ -28,38 +25,26 @@ public:
 };
 
 class TextEditor {
-private:
-    std::vector<std::unique_ptr<Line>> lines;
-
-    std::string copy;
-
-    std::stack<UndoRedoState> undoStack;
-    std::stack<UndoRedoState> redoStack;
-
-    UndoRedoState saveState();
-
+private: Text textStorage;
 public:
     TextEditor() = default;
     ~TextEditor() = default;
 
     Cursor cursor;
 
-    void newLine(std::unique_ptr<Line> nLine);
-    void Append();
-    void InsertPasteReplace(int choice);
-    void Search();
+    void AppendW();
+    void InsertPasteReplaceW(int choice);
+    void SearchW();
     void DeleteAndCut(bool cut);
-    void Copy();
-    void printAll() const;
+    void CopyW();
 
-    void Undo();
-    void Redo();
-
-    void Save(const std::string& filename);
-    void Load(const std::string& filename);
+    void SaveW();
+    void LoadW();
 
     void RightAndLeft(bool side);
     void UpAndDown(bool side);
     bool PrintWithCursor();
     void ReadingConsole();
+
+    void mConsole();
 };

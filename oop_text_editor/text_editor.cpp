@@ -1,25 +1,16 @@
 #include "text_editor.h"
+#include "text.h"
 #include "line.h"
 #include <iostream>
 #include <conio.h>
 #include <string>
 #include <fstream>
 
-UndoRedoState TextEditor::saveState() {
-    UndoRedoState state;
-
-    for (const auto& line : lines) {
-        state.linesSnapshot.push_back(line->clone());
-    }
-
-    return state;
-}
-
 void TextEditor::RightAndLeft(bool side) {
     int lIndex = cursor.getLine();
-    if (lIndex < 0 || lIndex >= static_cast<int>(lines.size())) return;
+    if (lIndex < 0 || lIndex >= static_cast<int>(textStorage.sizeLines())) return;
 
-    Line* curLine = lines[cursor.getLine()].get();
+    Line* curLine = textStorage.findLine(cursor.getLine());
     int curIndex = cursor.getIndex();
 
     if (side) {
@@ -34,7 +25,7 @@ void TextEditor::RightAndLeft(bool side) {
 
 void TextEditor::UpAndDown(bool side) {
     int lineInd = cursor.getLine();
-    int lastLine = static_cast<int>(lines.size());
+    int lastLine = textStorage.sizeLines();
 
     if (side) {
         if (lineInd > 0) {
@@ -49,7 +40,7 @@ void TextEditor::UpAndDown(bool side) {
 }
 
 bool TextEditor::PrintWithCursor() {
-    if (lines.empty()) {
+    if (textStorage.isEmpty()) {
         std::cout << "No current text.\n";
         return false;
     }
@@ -58,8 +49,8 @@ bool TextEditor::PrintWithCursor() {
     int curLine = cursor.getLine();
     int curIdx = cursor.getIndex();
 
-    for (int i = 0; i < (int)lines.size(); i++) {
-        std::string text = lines[i]->getText();
+    for (int i = 0; i < textStorage.sizeLines(); i++) {
+        std::string text = textStorage.lineText(i);
 
         if (i != curLine) {
             std::cout << text;
@@ -99,42 +90,17 @@ void TextEditor::ReadingConsole() {
     }
 }
 
-void TextEditor::newLine(std::unique_ptr<Line> nLine) {
-    UndoRedoState stateBefore = saveState();
-    undoStack.push(std::move(stateBefore));
-
-    lines.push_back(std::move(nLine));
-    std::printf("New line added\n");
-
-    UndoRedoState stateAfter = saveState();
-    redoStack.push(std::move(stateAfter));
-}
-
-void TextEditor::Append() {
-
-    if (lines.empty()) {
-        std::cout << "No current lines.\n";
-        return;
-    }
-
+void TextEditor::AppendW() {
     std::cout << "Enter text: " << std::endl;
     std::string input;
     std::getline(std::cin, input);
 
     int lIndex = cursor.getLine();
 
-    if (lIndex < 0 || lIndex >= static_cast<int>(lines.size())) {
-        lIndex = static_cast<int>(lines.size()) - 1;
-    }
-
-    Line* curLine = lines[lIndex].get();
-    curLine->append(input);
-
-    std::printf("Text appended.\n");
-    while (!redoStack.empty()) redoStack.pop();
+    textStorage.Append(input, lIndex);
 }
 
-void TextEditor::InsertPasteReplace(int choice) {
+void TextEditor::InsertPasteReplaceW(int choice) {
     std::printf("Choose line and index:\n");
     ReadingConsole();
 
@@ -145,71 +111,26 @@ void TextEditor::InsertPasteReplace(int choice) {
     if (choice == 1 || choice == 3) {
         std::printf(choice == 1 ? "Enter text to insert:\n" : "Enter text to replace:\n");
         std::getline(std::cin, text);
+        textStorage.InsertPasteReplace(choice, line, index, text);
     }
     else if (choice == 2) {
-        if (!copy.empty()) text = copy;
-        else { printf("Buffer is empty.\n"); return; }
+        textStorage.InsertPasteReplace(choice, line, index);
     }
     else {
         printf("Invalid command.\n");
         return;
     }
-
-    if (line < 0 || line >= (int)lines.size()) {
-        printf("Error: this line does not exist.\n");
-        return;
-    }
-
-    std::string t_text = lines[line]->getText();
-
-    if (index < 0 || index >(int)t_text.size()) {
-        printf("This index does not exist.\n");
-        return;
-    }
-
-    UndoRedoState stateBefore = saveState();
-    undoStack.push(std::move(stateBefore));
-
-    if (choice == 1 || choice == 2) {
-        t_text.insert(index, text);
-    }
-    else if (choice == 3) {
-        size_t count = std::min(text.size(), t_text.size() - index);
-        t_text.replace(index, count, text);
-    }
-
-    lines[line]->setText(t_text);
-    std::printf("Operation is completed.\n");
-    while (!redoStack.empty()) redoStack.pop();
 }
 
-void TextEditor::Search() {
+void TextEditor::SearchW() {
     std::string text;
 
     std::printf("Enter text to search:\n");
     std::getline(std::cin, text);
 
     if (text.size() <= 0) { printf("No searching words entered.\n"); return; }
-    std::vector<std::pair<int, int>> places;
 
-    for (int lineIndex = 0; lineIndex < (int)lines.size(); lineIndex++) {
-        std::string t_text = lines[lineIndex]->getText();
-
-        size_t pos = t_text.find(text, 0);
-        while (pos != std::string::npos) {
-            places.push_back({ lineIndex, (int)pos });
-            pos = t_text.find(text, pos + 1);
-        }
-    }
-
-    if (places.empty()) {
-        printf("Text not found.\n");
-        return;
-    }
-
-    for (const auto& p : places) {
-        std::printf("Found at line %d, index %d\n", p.first, p.second);
-    }
+    textStorage.Search(text);
 }
 
 void TextEditor::DeleteAndCut(bool cut) {
@@ -227,40 +148,10 @@ void TextEditor::DeleteAndCut(bool cut) {
         return;
     }
 
-    int number = indexEnd - indexStart;
-
-    if (number <= 0) {
-        std::printf("You cannot delete this info.\n");
-        return;
-    }
-
-    if (line < 0 || line >= (int)lines.size()) {
-        printf("This line does not exist.\n");
-        return;
-    }
-
-    std::string text = lines[line]->getText();
-
-    if (indexStart < 0 || indexEnd >(int)text.size()) {
-        printf("Invalid index range.\n");
-        return;
-    }
-
-    UndoRedoState stateBefore = saveState();
-    undoStack.push(std::move(stateBefore));
-
-    if (cut) {
-        copy = text.substr(indexStart, number);
-    }
-
-    text.erase(indexStart, number);
-    lines[line]->setText(text);
-
-    printf("Information deleted.\n");
-    while (!redoStack.empty()) redoStack.pop();
+    textStorage.DeleteAndCut(cut, line, indexStart, indexEnd);
 }
 
-void TextEditor::Copy() {
+void TextEditor::CopyW() {
     printf("Choose line, index for start and then for end (only in one line):\n");
     ReadingConsole();
 
@@ -275,102 +166,103 @@ void TextEditor::Copy() {
         return;
     }
 
-    int number = indexEnd - indexStart;
-
-    if (number <= 0) {
-        std::printf("You cannot copy this info.\n");
-        return;
-    }
-
-    if (line < 0 || line >= (int)lines.size()) {
-        printf("This line does not exist.\n");
-        return;
-    }
-
-    std::string text = lines[line]->getText();
-
-    if (indexStart < 0 || indexEnd >(int)text.size()) {
-        printf("Invalid index range.\n");
-        return;
-    }
-
-    copy = text.substr(indexStart, number);
-
-    std::printf("Copied successfully.\n");
+    textStorage.Copy(line, indexStart, indexEnd);
 }
 
-void TextEditor::Undo() {
-    if (undoStack.empty()) {
-        printf("Nothing to undo.\n");
-        return;
-    }
+void TextEditor::SaveW() {
+    std::string name;
 
-    UndoRedoState undoVersion = std::move(undoStack.top());
-    undoStack.pop();
+    std::printf("Enter name for file:\n");
+    std::getline(std::cin, name);
 
-    UndoRedoState currentState = saveState();
-    redoStack.push(std::move(currentState));
+    if (name.size() <= 0) { printf("No file name entered.\n"); return; }
 
-    lines = std::move(undoVersion.linesSnapshot);
+    textStorage.Save(name);
+}
+void TextEditor::LoadW() {
 
-    printf("Undo performed.\n");
+    std::string name;
+
+    std::printf("Enter name for file:\n");
+    std::getline(std::cin, name);
+
+    if (name.size() <= 0) { printf("No file name entered.\n"); return; }
+
+    textStorage.Load(name);
 }
 
-void TextEditor::Redo() {
-    if (redoStack.empty()) {
-        printf("Nothing to redo.\n");
-        return;
+void TextEditor::mConsole() {
+    int choice;
+
+    while (true) {
+        std::printf("\nMenu\n");
+        std::printf("%-25s %-25s %-25s %-25s\n", "1. Add new line", "2. Append text", "3. Insert text", "4. Paste");
+        std::printf("%-25s %-25s %-25s %-25s\n", "5. Replace text", "6. Search", "7. Delete", "8. Cut");
+        std::printf("%-25s %-25s %-25s %-25s\n", "9. Copy", "10. Undo", "11. Redo", "12. Print all");
+        std::printf("%-25s %-25s %-25s\n", "13. Save", "14. Load", "0. Exit");
+        std::printf("Enter choice: ");
+        
+        if (!(std::cin >> choice)) {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::printf("Invalid input.\n");
+            continue;
+        }
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+        switch (choice) {
+        case 1: {
+            std::printf("Enter line type (1 - Text, 2 - Contact, 3 - Checklist): ");
+            int type;
+            std::cin >> type;
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+            if (type == 1) {
+                std::string text;
+                std::printf("Enter text: ");
+                std::getline(std::cin, text);
+                textStorage.newLine(std::make_unique<TextLine>(text));
+            }
+            else if (type == 2) {
+                std::string name, surname, email;
+                std::printf("Enter name: "); std::getline(std::cin, name);
+                std::printf("Enter surname: "); std::getline(std::cin, surname);
+                std::printf("Enter email: "); std::getline(std::cin, email);
+                textStorage.newLine(std::make_unique<ContactLine>(name, surname, email));
+            }
+            else if (type == 3) {
+                std::string item;
+                int checked;
+                std::printf("Enter item: "); std::getline(std::cin, item);
+                std::printf("Checked? (1/0): "); std::cin >> checked;
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                textStorage.newLine(std::make_unique<ChecklistLine>(item, checked == 1));
+            }
+            else {
+                std::printf("Invalid type.\n");
+            }
+            break;
+        }
+        case 2: AppendW(); break;
+        case 3: InsertPasteReplaceW(1); break;
+        case 4: InsertPasteReplaceW(2); break;
+        case 5: InsertPasteReplaceW(3); break;
+        case 6: SearchW(); break;
+        case 7: DeleteAndCut(false); break;
+        case 8: DeleteAndCut(true); break;
+        case 9: CopyW(); break;
+        case 10: textStorage.Undo(); break;
+        case 11: textStorage.Redo(); break;
+        case 12: textStorage.printAll(); break;
+        case 13: SaveW(); break;
+        case 14: LoadW(); break;
+        case 0:
+            std::printf("Goodbye!\n");
+            return;
+        default:
+            std::printf("Unknown command.\n");
+            break;
+        }
     }
-
-    UndoRedoState redoVersion = std::move(redoStack.top());
-    redoStack.pop();
-
-    UndoRedoState currentState = saveState();
-    undoStack.push(std::move(currentState));
-
-    lines = std::move(redoVersion.linesSnapshot);
-
-    printf("Redo performed.\n");
 }
 
-void TextEditor::Save(const std::string& filename) {
-    std::ofstream file(filename);
-
-    if (!file.is_open()) {
-        printf("Could not open file for writing.\n");
-        return;
-    }
-
-    for (const auto& line : lines) {
-        file << line->serialize() << "\n";
-    }
-
-    file.close();
-    printf("File saved successfully.\n");
-}
-
-void TextEditor::Load(const std::string& filename) {
-    std::ifstream file(filename);
-
-    if (!file.is_open()) {
-        printf("Could not open file for reading.\n");
-        return;
-    }
-
-    lines.clear();
-
-    std::string loadString;
-    while (std::getline(file, loadString)) {
-        std::unique_ptr<Line> loadLine = Line::deserialize(loadString);
-        lines.push_back(std::move(loadLine));
-    }
-
-    file.close();
-    printf("File loaded successfully.\n");
-}
-
-void TextEditor::printAll() const {
-    for (const auto& line : lines) {
-        line->print();
-    }
-}

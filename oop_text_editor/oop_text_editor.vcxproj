@@ -139,10 +139,15 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="cipher.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="text.cpp" />
     <ClCompile Include="text_editor.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cipher.h" />
     <ClInclude Include="line.h" />
+    <ClInclude Include="text.h" />
     <ClInclude Include="text_editor.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
