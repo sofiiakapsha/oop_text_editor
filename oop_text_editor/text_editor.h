@@ -15,6 +15,14 @@ public:
     Cursor(int l, int i) : indexLine(l), index(i) {}
     ~Cursor() = default;
 
+    int getLine() {
+        return indexLine;
+    }
+
+    int getIndex() {
+        return index;
+    }
+
     void RightAndLeft(bool side);
     void UpAndDown(bool side);
 
@@ -29,7 +37,7 @@ private:
     std::stack<UndoRedoState> undoStack;
     std::stack<UndoRedoState> redoStack;
 
-    void saveState();
+    UndoRedoState saveState();
 
 public:
     TextEditor() = default;
@@ -37,7 +45,7 @@ public:
 
     Cursor cursor;
 
-    void newLine(std::unique_ptr<Line> newLine, bool isPrinting);
+    void newLine(std::unique_ptr<Line> nLine, bool isPrinting);
     void Append();
     void InsertPasteReplace(int choice);
     void Search();

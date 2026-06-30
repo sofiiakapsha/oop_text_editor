@@ -139,7 +139,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="oop_text_editor.cpp" />
+    <ClCompile Include="text_editor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="line.h" />

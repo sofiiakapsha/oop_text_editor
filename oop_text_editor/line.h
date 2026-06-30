@@ -9,6 +9,8 @@ class Line {
 public:
     virtual void print() const = 0;
     virtual std::string serialize() const = 0;
+    virtual std::unique_ptr<Line> clone() const = 0;
+    virtual void append(const std::string&) {} // нове
     static std::unique_ptr<Line> deserialize(const std::string& serializedData);
     virtual ~Line() {}
 };
@@ -22,8 +24,16 @@ public:
         std::cout << "Text: " << data << "\n";
     }
 
+    std::unique_ptr<Line> clone() const override {
+        return std::make_unique<TextLine>(data);
+    }
+
     std::string serialize() const override {
         return "TEXT|" + data;
+    }
+    
+    void append(const std::string& text) override {
+        data += text;
     }
 };
 
@@ -36,6 +46,10 @@ public:
 
     void print() const override {
         std::cout << "Contact - " << name << " " << surname << ", E-mail: " << email << "\n";
+    }
+
+    std::unique_ptr<Line> clone() const override {
+        return std::make_unique<ContactLine>(name, surname, email);
     }
 
     std::string serialize() const override {
@@ -51,6 +65,10 @@ public:
 
     void print() const override {
         std::cout << "[ " << (checked ? "x" : " ") << " ] " << item << "\n";
+    }
+
+    std::unique_ptr<Line> clone() const override {
+        return std::make_unique<ChecklistLine>(item, checked);
     }
 
     std::string serialize() const override {

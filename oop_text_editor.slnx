@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="oop_text_editor/oop_text_editor.vcxproj" />
+  <Project Path="oop_text_editor/oop_text_editor.vcxproj" Id="75f4d059-675b-434e-941f-bce5b82578e7" />
 </Solution>

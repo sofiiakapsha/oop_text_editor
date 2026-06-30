@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="oop_text_editor.cpp">
+    <ClCompile Include="text_editor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
