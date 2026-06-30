@@ -23,16 +23,15 @@ public:
         return index;
     }
 
-    void RightAndLeft(bool side);
-    void UpAndDown(bool side);
-
-    bool PrintWithCursor();
-    void ReadingConsole();
+    void setLine(int l) { indexLine = l; }
+    void setIndex(int i) { index = i; }
 };
 
 class TextEditor {
 private:
     std::vector<std::unique_ptr<Line>> lines;
+
+    std::string copy;
 
     std::stack<UndoRedoState> undoStack;
     std::stack<UndoRedoState> redoStack;
@@ -58,4 +57,9 @@ public:
 
     void Save(const std::string& filename);
     void Load(const std::string& filename);
+
+    void RightAndLeft(bool side);
+    void UpAndDown(bool side);
+    bool PrintWithCursor();
+    void ReadingConsole();
 };

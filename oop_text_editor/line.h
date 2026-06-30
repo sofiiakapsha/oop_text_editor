@@ -4,13 +4,16 @@
 #include <vector>
 #include <iostream>
 #include <memory>
+#include <ranges>
 
 class Line {
 public:
     virtual void print() const = 0;
     virtual std::string serialize() const = 0;
     virtual std::unique_ptr<Line> clone() const = 0;
-    virtual void append(const std::string&) {} // нове
+    virtual void append(const std::string&) {}
+    virtual std::string getText() const { return ""; }
+    virtual void setText(const std::string&) {}
     static std::unique_ptr<Line> deserialize(const std::string& serializedData);
     virtual ~Line() {}
 };
@@ -35,6 +38,12 @@ public:
     void append(const std::string& text) override {
         data += text;
     }
+
+    void setText(const std::string& text) override {
+        data = text;
+    }
+
+    std::string getText() const override { return data; }
 };
 
 class ContactLine : public Line {
@@ -55,6 +64,10 @@ public:
     std::string serialize() const override {
         return "CONT|" + name + "|" + surname + "|" + email;
     }
+
+    std::string getText() const override {
+        return "Contact - " + name + " " + surname + ", E-mail: " + email;
+    }
 };
 
 class ChecklistLine : public Line {
@@ -73,6 +86,10 @@ public:
 
     std::string serialize() const override {
         return "CHEK|" + item + "|" + (checked ? "1" : "0");
+    }
+
+    std::string getText() const override {
+        return "[ " + std::string(checked ? "x" : " ") + " ] " + item;
     }
 };
 
