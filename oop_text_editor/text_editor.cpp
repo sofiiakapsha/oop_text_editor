@@ -2,6 +2,7 @@
 #include "line.h"
 #include <iostream>
 #include <conio.h>
+#include <string>
 
 UndoRedoState TextEditor::saveState() {
     UndoRedoState state;
@@ -131,6 +132,135 @@ void TextEditor::Append() {
     curLine->append(input);
 
     std::printf("Text appended.\n");
+
+    UndoRedoState stateAfter = saveState();
+    redoStack.push(std::move(stateAfter));
+}
+
+void TextEditor::InsertPasteReplace(int choice) {
+    std::printf("Choose line and index:\n");
+    ReadingConsole();
+
+    std::string text;
+    int line = cursor.getLine();
+    int index = cursor.getIndex();
+
+    if (choice == 1 || choice == 3) {
+        std::printf(choice == 1 ? "Enter text to insert:\n" : "Enter text to replace:\n");
+        std::getline(std::cin, text);
+    }
+    else if (choice == 2) {
+        if (!copy.empty()) text = copy;
+        else { printf("Buffer is empty.\n"); return; }
+    }
+    else {
+        printf("Invalid command.\n");
+        return;
+    }
+
+    if (line < 0 || line >= (int)lines.size()) {
+        printf("Error: this line does not exist.\n");
+        return;
+    }
+
+    std::string t_text = lines[line]->getText();
+
+    if (index < 0 || index >(int)t_text.size()) {
+        printf("This index does not exist.\n");
+        return;
+    }
+
+    UndoRedoState stateBefore = saveState();
+    undoStack.push(std::move(stateBefore));
+
+    if (choice == 1 || choice == 2) {
+        t_text.insert(index, text);
+    }
+    else if (choice == 3) {
+        size_t count = std::min(text.size(), t_text.size() - index);
+        t_text.replace(index, count, text);
+    }
+
+    lines[line]->setText(t_text);
+
+    UndoRedoState stateAfter = saveState();
+    redoStack.push(std::move(stateAfter));
+}
+
+void TextEditor::Search() {
+    std::string text;
+
+    std::printf("Enter text to search:\n");
+    std::getline(std::cin, text);
+
+    if (text.size() <= 0) { printf("No searching words entered.\n"); return; }
+    std::vector<std::pair<int, int>> places;
+
+    for (int lineIndex = 0; lineIndex < (int)lines.size(); lineIndex++) {
+        std::string t_text = lines[lineIndex]->getText();
+
+        size_t pos = t_text.find(text, 0);
+        while (pos != std::string::npos) {
+            places.push_back({ lineIndex, (int)pos });
+            pos = t_text.find(text, pos + 1);
+        }
+    }
+
+    if (places.empty()) {
+        printf("Text not found.\n");
+        return;
+    }
+
+    for (const auto& p : places) {
+        std::printf("Found at line %d, index %d\n", p.first, p.second);
+    }
+}
+
+void TextEditor::DeleteAndCut(bool cut) {
+    printf("Choose line, index for start and then for end (only in one line):\n");
+    ReadingConsole();
+
+    int line = cursor.getLine();
+    int indexStart = cursor.getIndex();
+
+    ReadingConsole();
+    int indexEnd = cursor.getIndex();
+
+    if (line != cursor.getLine()) {
+        printf("Only in one line!\n");
+        return;
+    }
+
+    int number = indexEnd - indexStart;
+
+    if (number <= 0) {
+        std::printf("You cannot delete this info.\n");
+        return;
+    }
+
+    if (line < 0 || line >= (int)lines.size()) {
+        printf("This line does not exist.\n");
+        return;
+    }
+
+    std::string text = lines[line]->getText();
+
+    if (indexStart < 0 || indexEnd >(int)text.size()) {
+        printf("Invalid index range.\n");
+        return;
+    }
+
+    UndoRedoState stateBefore = saveState();
+    undoStack.push(std::move(stateBefore));
+
+    if (cut) {
+        copy = text.substr(indexStart, number);
+    }
+
+    text.erase(indexStart, number);
+    lines[line]->setText(text);
+
+    printf("Information deleted.\n");
 
     UndoRedoState stateAfter = saveState();
     redoStack.push(std::move(stateAfter));
