@@ -68,6 +68,26 @@ public:
     std::string getText() const override {
         return "Contact - " + name + " " + surname + ", E-mail: " + email;
     }
+
+    void setText(const std::string& text) override {
+        const std::string prefix = "Contact - ";
+        const std::string emailMarker = ", E-mail: ";
+        size_t startPos = text.find(prefix);
+        size_t emailPos = text.find(emailMarker);
+        if (startPos != std::string::npos && emailPos != std::string::npos) {
+            std::string namePart = text.substr(prefix.size(), emailPos - prefix.size());
+            email = text.substr(emailPos + emailMarker.size());
+            size_t spacePos = namePart.find(' ');
+            if (spacePos != std::string::npos) {
+                name = namePart.substr(0, spacePos);
+                surname = namePart.substr(spacePos + 1);
+            }
+            else {
+                name = namePart;
+                surname = "";
+            }
+        }
+    }
 };
 
 class ChecklistLine : public Line {
@@ -90,6 +110,13 @@ public:
 
     std::string getText() const override {
         return "[ " + std::string(checked ? "x" : " ") + " ] " + item;
+    }
+
+    void setText(const std::string& text) override {
+        if (text.size() >= 6 && text[0] == '[') {
+            checked = (text[2] == 'x');
+            item = text.substr(6);
+        }
     }
 };
 

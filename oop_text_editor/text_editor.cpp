@@ -1,4 +1,5 @@
 #include "text_editor.h"
+#include "cipher.h"
 #include "text.h"
 #include "line.h"
 #include <iostream>
@@ -53,7 +54,7 @@ bool TextEditor::PrintWithCursor() {
         std::string text = textStorage.lineText(i);
 
         if (i != curLine) {
-            std::cout << text;
+            std::cout << text << std::endl;
         }
         else {
             for (size_t j = 0; j < text.size(); j++) {
@@ -61,6 +62,7 @@ bool TextEditor::PrintWithCursor() {
                 std::cout << text[j];
             }
             if (curIdx == (int)text.size()) std::cout << "|";
+            std::cout << "\n";
         }
     }
     std::cout << "\n";
@@ -191,6 +193,79 @@ void TextEditor::LoadW() {
     textStorage.Load(name);
 }
 
+void TextEditor::EncryptFileW() {
+    std::string inputPath, outputPath, key;
+    int cipherType;
+
+    std::printf("Enter input file path: ");
+    std::getline(std::cin, inputPath);
+    if (inputPath.empty()) { std::printf("No path entered.\n"); return; }
+    textStorage.Load(inputPath);
+
+    std::printf("Enter output file path: ");
+    std::getline(std::cin, outputPath);
+    if (outputPath.empty()) { std::printf("No path entered.\n"); return; }
+
+    std::printf("Choose cipher: 1 - Caesar, 2 - Vigenere, 3 - Atbash\n");
+    std::printf("Enter choice: ");
+    if (!(std::cin >> cipherType) || cipherType < 1 || cipherType > 3) {
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::printf("Invalid cipher choice.\n");
+        return;
+    }
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    if (cipherType == 1) {
+        std::printf("Enter Caesar key (integer): ");
+        std::getline(std::cin, key);
+    }
+    else if (cipherType == 2) {
+        std::printf("Enter Vigenere key (word): ");
+        std::getline(std::cin, key);
+    }
+
+    Cipher cipherTool;
+    cipherTool.Encrypt(textStorage, cipherType, key);
+    textStorage.Save(outputPath);
+}
+
+void TextEditor::DecryptFileW() {
+    std::string inputPath, outputPath, key;
+    int cipherType;
+
+    std::printf("Enter input file path: ");
+    std::getline(std::cin, inputPath);
+    if (inputPath.empty()) { std::printf("No path entered.\n"); return; }
+    textStorage.Load(inputPath);
+
+    std::printf("Enter output file path: ");
+    std::getline(std::cin, outputPath);
+    if (outputPath.empty()) { std::printf("No path entered.\n"); return; }
+
+    std::printf("Choose cipher: 1 - Caesar, 2 - Vigenere, 3 - Atbash\n");
+    std::printf("Enter choice: ");
+    if (!(std::cin >> cipherType) || cipherType < 1 || cipherType > 3) {
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::printf("Invalid cipher choice.\n");
+        return;
+    }
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    if (cipherType == 1) {
+        std::printf("Enter Caesar key (integer): ");
+        std::getline(std::cin, key);
+    }
+    else if (cipherType == 2) {
+        std::printf("Enter Vigenere key (word): ");
+        std::getline(std::cin, key);
+    }
+
+    Cipher cipherTool;
+    cipherTool.Decrypt(textStorage, cipherType, key);
+    textStorage.Save(outputPath);
+}
 void TextEditor::mConsole() {
     int choice;
 
@@ -199,9 +274,10 @@ void TextEditor::mConsole() {
         std::printf("%-25s %-25s %-25s %-25s\n", "1. Add new line", "2. Append text", "3. Insert text", "4. Paste");
         std::printf("%-25s %-25s %-25s %-25s\n", "5. Replace text", "6. Search", "7. Delete", "8. Cut");
         std::printf("%-25s %-25s %-25s %-25s\n", "9. Copy", "10. Undo", "11. Redo", "12. Print all");
-        std::printf("%-25s %-25s %-25s\n", "13. Save", "14. Load", "0. Exit");
+        std::printf("%-25s %-25s %-25s %-25s\n", "13. Save", "14. Load", "15. Encrypt Text", "16. Decrypt Text");
+        std::printf("0. Exit\n");
         std::printf("Enter choice: ");
-        
+
         if (!(std::cin >> choice)) {
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -256,6 +332,8 @@ void TextEditor::mConsole() {
         case 12: textStorage.printAll(); break;
         case 13: SaveW(); break;
         case 14: LoadW(); break;
+        case 15: EncryptFileW(); break;
+        case 16: DecryptFileW(); break;
         case 0:
             std::printf("Goodbye!\n");
             return;
@@ -265,4 +343,3 @@ void TextEditor::mConsole() {
         }
     }
 }
-

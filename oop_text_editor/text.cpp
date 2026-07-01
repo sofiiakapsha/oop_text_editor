@@ -40,7 +40,7 @@ void Text::Append(std::string input, int lIndex) {
     while (!redoStack.empty()) redoStack.pop();
 }
 
-void Text::InsertPasteReplace(int choice, int line, int index, std::string text = NULL) {
+void Text::InsertPasteReplace(int choice, int line, int index, std::string text) {
 
     if (choice == 2) {
         if (!copy.empty()) text = copy;
@@ -227,6 +227,31 @@ void Text::Load(const std::string& filename) {
 
     file.close();
     printf("File loaded successfully.\n");
+}
+
+
+std::vector<std::string> Text::allSerialized() {
+    std::vector<std::string> result;
+    for (const auto& line : lines)
+        result.push_back(line->serialize());
+    return result;
+}
+
+void Text::replaceWithRaw(const std::vector<std::string>& rawLines) {
+    lines.clear();
+    for (const auto& s : rawLines)
+        lines.push_back(std::make_unique<TextLine>(s));
+}
+
+void Text::loadFromSerialized(const std::vector<std::string>& serializedLines) {
+    lines.clear();
+    for (const auto& s : serializedLines) {
+        auto line = Line::deserialize(s);
+        if (line)
+            lines.push_back(std::move(line));
+        else
+            lines.push_back(std::make_unique<TextLine>(s));
+    }
 }
 
 void Text::printAll() const {

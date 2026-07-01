@@ -9,6 +9,7 @@
 class Cursor {
 private: int indexLine, index;
 public:
+    Cursor() : indexLine(0), index(0) {}
     Cursor(int l, int i) : indexLine(l), index(i) {}
     ~Cursor() = default;
 
@@ -40,6 +41,9 @@ public:
 
     void SaveW();
     void LoadW();
+
+    void EncryptFileW();
+    void DecryptFileW();
 
     void RightAndLeft(bool side);
     void UpAndDown(bool side);
