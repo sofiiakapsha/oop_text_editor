@@ -45,6 +45,8 @@ public:
     void EncryptFileW();
     void DecryptFileW();
 
+    void ToggleChecklistW();
+
     void RightAndLeft(bool side);
     void UpAndDown(bool side);
     bool PrintWithCursor();

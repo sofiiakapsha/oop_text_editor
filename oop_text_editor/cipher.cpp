@@ -2,10 +2,35 @@
 #include "cipher_api.h"
 #include <iostream>
 #include <string>
+#include <sstream>
 #include "cipher.h"
 #include "line.h"
 #include "text.h"
 
+namespace {
+    std::vector<std::string> splitFields(const std::string& s) {
+        std::vector<std::string> parts;
+        std::stringstream ss(s);
+        std::string field;
+        while (std::getline(ss, field, '|')) {
+            parts.push_back(field);
+        }
+        if (!s.empty() && s.back() == '|') {
+            parts.push_back("");
+        }
+        return parts;
+    }
+
+    std::string joinFields(const std::vector<std::string>& parts) {
+        std::string result;
+        for (size_t i = 0; i < parts.size(); ++i) {
+            if (i > 0) result += "|";
+            result += parts[i];
+        }
+        return result;
+    }
+
+}
 
 void Cipher::Encrypt(Text& textStorage, int cipherType, const std::string& key) {
 
@@ -59,12 +84,18 @@ void Cipher::Encrypt(Text& textStorage, int cipherType, const std::string& key) 
     std::vector<std::string> encryptedLines;
 
     for (const auto& lineStr : serialized) {
-        char* encBytes = encrypt(cipher_inst, lineStr.c_str());
-        encryptedLines.push_back(encBytes ? encBytes : "");
-        if (encBytes) free_func(encBytes);
+        std::vector<std::string> fields = splitFields(lineStr);
+        for (size_t i = 1; i < fields.size(); ++i) {
+            if (fields[i].empty()) continue;
+            char* encBytes = encrypt(cipher_inst, fields[i].c_str());
+            fields[i] = encBytes ? encBytes : fields[i];
+            if (encBytes) free_func(encBytes);
+        }
+
+        encryptedLines.push_back(joinFields(fields));
     }
 
-    textStorage.replaceWithRaw(encryptedLines);
+    textStorage.loadFromSerialized(encryptedLines);
 
     destroy(cipher_inst);
     FreeLibrary(hLib);
@@ -115,16 +146,23 @@ void Cipher::Decrypt(Text& textStorage, int cipherType, const std::string& key) 
         cipher_inst = create_atbash();
     }
 
-    std::vector<std::string> encryptedLines = textStorage.allText();
-    std::vector<std::string> decryptedSerialized;
+    std::vector<std::string> serialized = textStorage.allSerialized();
+    std::vector<std::string> decryptedLines;
 
-    for (const auto& lineStr : encryptedLines) {
-        char* decBytes = decrypt(cipher_inst, lineStr.c_str());
-        decryptedSerialized.push_back(decBytes ? decBytes : "");
-        if (decBytes) free_func(decBytes);
+    for (const auto& lineStr : serialized) {
+        std::vector<std::string> fields = splitFields(lineStr);
+
+        for (size_t i = 1; i < fields.size(); ++i) {
+            if (fields[i].empty()) continue;
+            char* decBytes = decrypt(cipher_inst, fields[i].c_str());
+            fields[i] = decBytes ? decBytes : fields[i];
+            if (decBytes) free_func(decBytes);
+        }
+
+        decryptedLines.push_back(joinFields(fields));
     }
 
-    textStorage.loadFromSerialized(decryptedSerialized);
+    textStorage.loadFromSerialized(decryptedLines);
 
     destroy(cipher_inst);
     FreeLibrary(hLib);

@@ -54,6 +54,8 @@ public:
     void Copy(int line, int indexStart, int indexEnd);
     void printAll() const;
 
+    void ToggleChecklist(int lineIndex);
+
     void Undo();
     void Redo();
 

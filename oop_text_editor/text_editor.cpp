@@ -266,6 +266,13 @@ void TextEditor::DecryptFileW() {
     cipherTool.Decrypt(textStorage, cipherType, key);
     textStorage.Save(outputPath);
 }
+
+void TextEditor::ToggleChecklistW() {
+    printf("Choose checklist line:\n");
+    ReadingConsole();
+    textStorage.ToggleChecklist(cursor.getLine());
+}
+
 void TextEditor::mConsole() {
     int choice;
 

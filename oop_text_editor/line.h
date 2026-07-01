@@ -118,6 +118,10 @@ public:
             item = text.substr(6);
         }
     }
+
+    void changeStatus() {
+        checked = !checked;
+    }
 };
 
 inline std::unique_ptr<Line> Line::deserialize(const std::string& serialized_data) {

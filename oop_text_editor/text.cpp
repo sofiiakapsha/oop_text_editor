@@ -254,6 +254,22 @@ void Text::loadFromSerialized(const std::vector<std::string>& serializedLines) {
     }
 }
 
+void Text::ToggleChecklist(int lineIndex) {
+    if (lineIndex < 0 || lineIndex >= (int)lines.size()) {
+        printf("Line does not exist.\n");
+        return;
+    }
+
+    ChecklistLine* cl = dynamic_cast<ChecklistLine*>(lines[lineIndex].get());
+    if (cl) {
+        cl->changeStatus();
+        printf("Status toggled.\n");
+    }
+    else {
+        printf("This line is not a checklist.\n");
+    }
+}
+
 void Text::printAll() const {
     for (const auto& line : lines) {
         line->print();
