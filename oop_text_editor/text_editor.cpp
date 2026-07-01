@@ -282,6 +282,7 @@ void TextEditor::mConsole() {
         std::printf("%-25s %-25s %-25s %-25s\n", "5. Replace text", "6. Search", "7. Delete", "8. Cut");
         std::printf("%-25s %-25s %-25s %-25s\n", "9. Copy", "10. Undo", "11. Redo", "12. Print all");
         std::printf("%-25s %-25s %-25s %-25s\n", "13. Save", "14. Load", "15. Encrypt Text", "16. Decrypt Text");
+        std::printf("%-25s %-25s\n", "17. Toggle", "0. Exit");
         std::printf("0. Exit\n");
         std::printf("Enter choice: ");
 
@@ -308,15 +309,42 @@ void TextEditor::mConsole() {
             }
             else if (type == 2) {
                 std::string name, surname, email;
-                std::printf("Enter name: "); std::getline(std::cin, name);
-                std::printf("Enter surname: "); std::getline(std::cin, surname);
-                std::printf("Enter email: "); std::getline(std::cin, email);
+
+                std::printf("Enter name: ");
+                std::getline(std::cin, name);
+                if (name.empty()) {
+                    std::printf("Error: name cannot be empty.\n");
+                    break;
+                }
+
+                std::printf("Enter surname: ");
+                std::getline(std::cin, surname);
+                if (surname.empty()) {
+                    std::printf("Error: surname cannot be empty.\n");
+                    break;
+                }
+
+                std::printf("Enter email: ");
+                std::getline(std::cin, email);
+                if (email.empty()) {
+                    std::printf("Error: email cannot be empty.\n");
+                    break;
+                }
+                if (email.find('@') == std::string::npos) {
+                    std::printf("Error: email must contain '@'.\n");
+                    break;
+                }
+
                 textStorage.newLine(std::make_unique<ContactLine>(name, surname, email));
             }
             else if (type == 3) {
                 std::string item;
                 int checked;
                 std::printf("Enter item: "); std::getline(std::cin, item);
+                if (item.empty()) {
+                    std::printf("Error: item cannot be empty.\n");
+                    break;
+                }
                 std::printf("Checked? (1/0): "); std::cin >> checked;
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
                 textStorage.newLine(std::make_unique<ChecklistLine>(item, checked == 1));
@@ -341,6 +369,7 @@ void TextEditor::mConsole() {
         case 14: LoadW(); break;
         case 15: EncryptFileW(); break;
         case 16: DecryptFileW(); break;
+        case 17: ToggleChecklistW(); break;
         case 0:
             std::printf("Goodbye!\n");
             return;

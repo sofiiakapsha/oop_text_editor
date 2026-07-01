@@ -1,0 +1,4 @@
+CONT|Lily P.|Baelar|lilypbael@gmail.com
+CHEK|Send Lily B. updates;|0
+TEXT|Rufus Scrimgeour, previously Head of the Auror Office in the Department of Magical Law Enforcement, has succeeded Cornelius Fudge as Minister for Magic. The appointment has largely been greeted with enthusiasm by the wizarding community, though rumours of a rift between the new Minister and Albus Dumbledore, newly reinstated Chief Warlock of the Wizengamot, surfaced within hours of Scrimgeour taking office.
+TEXT|Scrimgeour's representatives admitted that he had met with Dumbledore at once upon taking possession

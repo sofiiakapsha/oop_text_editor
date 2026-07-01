@@ -151,6 +151,10 @@ inline std::unique_ptr<Line> Line::deserialize(const std::string& serialized_dat
         bool checked = (checkedStr == "1");
         return std::make_unique<ChecklistLine>(item, checked);
     }
+    else {
+        std::printf("Warning: unknown line type '%s', skipping.\n", typeMarker.c_str());
+        return nullptr;
+    }
 
     return nullptr;
 }

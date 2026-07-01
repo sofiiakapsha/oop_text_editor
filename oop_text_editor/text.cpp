@@ -222,7 +222,12 @@ void Text::Load(const std::string& filename) {
     std::string loadString;
     while (std::getline(file, loadString)) {
         std::unique_ptr<Line> loadLine = Line::deserialize(loadString);
-        lines.push_back(std::move(loadLine));
+        if (loadLine) {
+            lines.push_back(std::move(loadLine));
+        }
+        else {
+            std::printf("Skipped invalid line: %s\n", loadString.c_str());
+        }
     }
 
     file.close();
