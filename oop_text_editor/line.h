@@ -14,6 +14,7 @@ public:
     virtual void append(const std::string&) {}
     virtual std::string getText() const { return ""; }
     virtual void setText(const std::string&) {}
+    virtual bool hasColumns() const { return true; }
     static std::unique_ptr<Line> deserialize(const std::string& serializedData);
     virtual ~Line() {}
 };
@@ -69,6 +70,8 @@ public:
         return "Contact - " + name + " " + surname + ", E-mail: " + email;
     }
 
+    bool hasColumns() const override { return false; }
+
     void setText(const std::string& text) override {
         const std::string prefix = "Contact - ";
         const std::string emailMarker = ", E-mail: ";
@@ -111,6 +114,8 @@ public:
     std::string getText() const override {
         return "[ " + std::string(checked ? "x" : " ") + " ] " + item;
     }
+
+        bool hasColumns() const override { return false; }
 
     void setText(const std::string& text) override {
         if (text.size() >= 6 && text[0] == '[') {

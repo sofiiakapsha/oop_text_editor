@@ -34,6 +34,10 @@ void Text::Append(std::string input, int lIndex) {
     }
 
     Line* curLine = lines[lIndex].get();
+    if (!curLine->hasColumns()) {
+        std::cout << "Cannot append at index-position on this line type.\n";
+        return;
+    }
     curLine->append(input);
 
     std::printf("Text appended.\n");
@@ -49,6 +53,12 @@ void Text::InsertPasteReplace(int choice, int line, int index, std::string text)
 
     if (line < 0 || line >= (int)lines.size()) {
         printf("Error: this line does not exist.\n");
+        return;
+    }
+
+    Line* curLine = lines[line].get();
+    if (!curLine->hasColumns()) {
+        std::cout << "Cannot append at index-position on this line type.\n";
         return;
     }
 

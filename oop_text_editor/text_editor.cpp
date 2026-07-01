@@ -12,6 +12,12 @@ void TextEditor::RightAndLeft(bool side) {
     if (lIndex < 0 || lIndex >= static_cast<int>(textStorage.sizeLines())) return;
 
     Line* curLine = textStorage.findLine(cursor.getLine());
+
+    if (!curLine->hasColumns()) {
+        cursor.setIndex(0);
+        return;
+    }
+
     int curIndex = cursor.getIndex();
 
     if (side) {
@@ -27,15 +33,15 @@ void TextEditor::RightAndLeft(bool side) {
 void TextEditor::UpAndDown(bool side) {
     int lineInd = cursor.getLine();
     int lastLine = textStorage.sizeLines();
+    int step = side ? -1 : 1;
+    int next = lineInd + step;
 
-    if (side) {
-        if (lineInd > 0) {
-            cursor.setLine(lineInd - 1);
-            cursor.setIndex(0);
-        }
+    while (next >= 0 && next < lastLine && !textStorage.findLine(next)->hasColumns()) {
+        next += step;
     }
-    else if (lastLine > lineInd + 1) {
-        cursor.setLine(lineInd + 1);
+
+    if (next >= 0 && next < lastLine) {
+        cursor.setLine(next);
         cursor.setIndex(0);
     }
 }
@@ -53,7 +59,7 @@ bool TextEditor::PrintWithCursor() {
     for (int i = 0; i < textStorage.sizeLines(); i++) {
         std::string text = textStorage.lineText(i);
 
-        if (i != curLine) {
+        if (i != curLine || !textStorage.findLine(i)->hasColumns()) {
             std::cout << text << std::endl;
         }
         else {
@@ -93,6 +99,9 @@ void TextEditor::ReadingConsole() {
 }
 
 void TextEditor::AppendW() {
+    std::printf("Choose line and index:\n");
+    ReadingConsole();
+
     std::cout << "Enter text: " << std::endl;
     std::string input;
     std::getline(std::cin, input);

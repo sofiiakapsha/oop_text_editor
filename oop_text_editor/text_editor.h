@@ -27,6 +27,7 @@ public:
 
 class TextEditor {
 private: Text textStorage;
+       void EnsureValidCursorLine();
 public:
     TextEditor() = default;
     ~TextEditor() = default;
